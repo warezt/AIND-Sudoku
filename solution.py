@@ -110,7 +110,7 @@ def only_choice(values):
             if len(dplaces)==1:                 #If list length=1, place it with digits. Notably, len when use to list will return amount of list
                 values[dplaces[0]] = digit      #Input digit in values dict if there is only one box associate with it
     return values
-
+ 
 def reduce_puzzle(values):
     stalled = False     #Set up boolean variable
     while not stalled:
