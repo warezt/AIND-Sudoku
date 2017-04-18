@@ -1,28 +1,30 @@
 assignments = []
 rows = 'ABCDEFGHI'
 cols = '123456789'
-def cross(A, B):
+def cross(a, b):
     "Cross product of elements in A and elements in B."
     return [s+t for s in a for t in b]
 boxes = cross(rows, cols)      #Return list of 81 grids
 row_units = [cross(r, cols) for r in rows]  #Return 9 row 
 column_units = [cross(rows, c) for c in cols]   #Return 9 column
 square_units = [cross(rs, cs) for rs in ('ABC','DEF','GHI') for cs in ('123','456','789')]  #Return 9 squares
-unitlist = row_units + column_units + square_units  #Sum of 3 unit types
-units = dict((s, [u for u in unitlist if s in u]) for s in boxes)   #List of 81 grids. Each represent row unit, column unit, and square unit
-peers = dict((s, set(sum(units[s],[]))-set([s])) for s in boxes)    #List of 81 grids. Each represent 20 peers
-
-
+diagonal_1=list([x+y for x,y in zip(list(rows),list(cols))])
+diagonal_2=list([x+y for x,y in zip(list(rows),sorted(list(cols),reverse=True))])
+diagonal_units=[]   #Return 2 diagonal units
+diagonal_units.append(diagonal_1)
+diagonal_units.append(diagonal_2)
+unitlist = row_units + column_units + square_units + diagonal_units  #Sum of 4 unit types; around 9+9+9+2 = 29 units
+units = dict((s, [u for u in unitlist if s in u]) for s in boxes)   #List of 81 grids. Each represent row unit, column unit, square unit, and diagonal unit
+peers = dict((s, set(sum(units[s],[]))-set([s])) for s in boxes)    #List of 81 grids. Each represent 20+ peers
+print("123")
 def assign_value(values, box, value):
     """
     Please use this function to update your values dictionary!
     Assigns a value to a given box. If it updates the board record it.
     """
-
     # Don't waste memory appending actions that don't actually change any values
     if values[box] == value:
         return values
-
     values[box] = value
     if len(value) == 1:
         assignments.append(values.copy())
@@ -32,15 +34,25 @@ def naked_twins(values):
     """Eliminate values using the naked twins strategy.
     Args:
         values(dict): a dictionary of the form {'box_name': '123456789', ...}
-
     Returns:
         the values dictionary with the naked twins eliminated from peers.
     """
-
     # Find all instances of naked twins
-    # Eliminate the naked twins as possibilities for their peers
-
-
+    for unit in unitlist:   #for each 29 unit of 4 unit type
+        unitvalue=[]
+        unitvalue=[values[box] for box in unit] #Create value list for search                     
+        for box in unit:              
+            if len(values[box])==2 and unitvalue.count(values[box])>=2: #Identify naked twins of each box in each local unit
+                naked_twins_value=values[box]     #Store 2 digits found #Naked twin could occurs more than once in one unit
+                naked_twins_location=[]           #Find location of box that has naked value      
+                for findpreservebox in unit:      #Identify location  
+                    if values[findpreservebox]==naked_twins_value:
+                        naked_twins_location.append(findpreservebox)                
+                for delbox in unit:                 #Search to delete across unit
+                    if delbox not in naked_twins_location:
+                        for digitdel in naked_twins_value:    #Delete digit by digit
+                            values[delbox]=values[delbox].replace(digitdel,'')
+    return values
 
 def grid_values(grid):
     """
@@ -106,6 +118,8 @@ def reduce_puzzle(values):
         solved_values_before = len([box for box in values.keys() if len(values[box]) == 1])
         # Use the Eliminate Strategy
         values = eliminate(values)
+        # Further eliminate using naked twins strategy
+        values = naked_twins(values)
         # Use the Only Choice Strategy
         values = only_choice(values)
         # Check how many boxes have a determined value; Again. Looking at how many box has interger len ==1
